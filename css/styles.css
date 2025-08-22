@@ -1,9 +1,9 @@
 /* CSS Variables */
 :root {
   /* Primary Colors */
-  --primary-color: #1976d2;
-  --primary-hover: #1565c0;
-  --primary-light: #e3f2fd;
+  --primary-color: #29445f;
+  --primary-hover: #3f6183;
+  --primary-light: #56799c;
 
   /* Background Colors */
   --background-color: #f5f5f5;
@@ -221,8 +221,10 @@ body {
 }
 
 .tree-node.selected {
-  background-color: var(--primary-light);
-  color: var(--primary-color);
+  background-color: var(--primary-color);
+  color: white;
+  font-weight: 500;
+  box-shadow: 0 1px 3px var(--shadow-light);
 }
 
 .tree-node i {
@@ -237,7 +239,21 @@ body {
 }
 
 .tree-node.selected i {
-  color: var(--primary-color);
+  color: white;
+}
+
+/* Folder icon states */
+.tree-node i.fa-folder {
+  color: var(--folder-icon-color);
+}
+
+.tree-node i.fa-folder-open {
+  color: var(--folder-icon-color);
+}
+
+.tree-node.selected i.fa-folder,
+.tree-node.selected i.fa-folder-open {
+  color: white;
 }
 
 /* Breadcrumb */
@@ -255,6 +271,7 @@ body {
 
 .back-button {
   background-color: var(--primary-color);
+  opacity: 0.6;
   border: none;
   color: white;
   cursor: pointer;
@@ -267,6 +284,10 @@ body {
   width: 36px;
   height: 36px;
   box-shadow: 0 2px 4px var(--shadow-light);
+}
+
+.back-button:hover {
+  opacity: 0.8;
 }
 
 .back-button i {
@@ -352,7 +373,8 @@ body {
   width: calc(100% + 32px);
   padding: 12px 16px;
   margin: auto -16px 0;
-  background-color: var(--button-area-background);
+  background-color: var(--primary-hover);
+  opacity: 0.6;
   border-top: 1px solid var(--border-light);
   border-radius: 0 0 8px 8px;
   justify-content: flex-end;
@@ -361,7 +383,7 @@ body {
 }
 
 .file-action-btn {
-  background: var(--card-background);
+  background: var(--primary-light);
   border: 1px solid var(--button-border);
   padding: 6px 12px;
   border-radius: 4px;
@@ -369,12 +391,20 @@ body {
   font-size: 12px;
   font-weight: 500;
   transition: all 0.2s;
-  color: var(--text-dark);
+  color: var(--background-color);
 }
 
 .file-action-btn:hover {
   background-color: var(--button-hover-background);
   border-color: var(--primary-color);
+  color: var(--primary-color);
+}
+
+.fa-text {
+  color: var(--border-light);
+}
+
+.fa-text:hover {
   color: var(--primary-color);
 }
 

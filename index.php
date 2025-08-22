@@ -1,21 +1,17 @@
 <?php
-// File Explorer PHP Backend - Compatible with PHP 5.3+
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-
-// Include functions
 require_once 'functions.php';
-
-// Set HTML header for regular page requests
 header('Content-Type: text/html; charset=utf-8');
 ?>
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>File Explorer</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>CDN GZAPI</title>
+    <link rel="icon" type="image/x-icon" href="images/favicon.ico">
     <link rel="preconnect" href="https://fonts.gstatic.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -31,13 +27,6 @@ header('Content-Type: text/html; charset=utf-8');
             </button>
             <span class="toolbar-title"><img src="images/logo_branca.png" alt="File Explorer" style="height: 40px; vertical-align: middle;"></span>
             <div class="spacer"></div>
-            <div class="connection-status">
-                <span class="status-indicator online"></span>
-                <span class="status-text">Conectado</span>
-            </div>
-            <button class="refresh-button" onclick="refreshContent()">
-                <i class="fa-solid fa-arrows-rotate"></i>
-            </button>
         </div>
 
         <!-- Main Content Area -->

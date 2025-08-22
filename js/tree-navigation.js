@@ -628,6 +628,16 @@ class TreeNavigation {
       node.classList.remove("selected");
     });
 
+    // Handle root path
+    if (currentPath === "/" || currentPath === "") {
+      const homeNode = document.querySelector(".tree-node");
+      if (homeNode) {
+        homeNode.classList.add("selected");
+        homeNode.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      return;
+    }
+
     // Add highlight to current path
     const nodeId = this.generateNodeId(currentPath);
     let currentNode = document.querySelector(`[data-node-id="${nodeId}"]`);
@@ -642,8 +652,16 @@ class TreeNavigation {
         for (const node of treeNodes) {
           const span = node.querySelector("span");
           if (span && span.textContent.trim() === currentFolderName) {
-            currentNode = node;
-            break;
+            // Additional check to ensure we're selecting the right node by checking data attributes or path context
+            const nodeIdAttr = node.getAttribute('data-node-id');
+            if (nodeIdAttr && nodeIdAttr.includes(currentFolderName.replace(/[^a-zA-Z0-9]/g, "_"))) {
+              currentNode = node;
+              break;
+            }
+            // If no better match found, use the first matching folder name
+            if (!currentNode) {
+              currentNode = node;
+            }
           }
         }
       }
@@ -652,6 +670,11 @@ class TreeNavigation {
     if (currentNode) {
       currentNode.classList.add("selected");
       currentNode.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      
+      // Update folder icons after highlighting
+      if (window.fileExplorer && window.fileExplorer.updateFolderIcons) {
+        window.fileExplorer.updateFolderIcons();
+      }
     }
   }
 }

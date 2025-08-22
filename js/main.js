@@ -69,8 +69,8 @@ class FileExplorer {
         nodeEl.innerHTML = `
                     <i class="fa-solid ${
                       item.children && item.children.length > 0
-                        ? "fa-folder"
-                        : "fa-folder-open"
+                        ? "fa-folder-open"
+                        : "fa-folder"
                     }"></i>
                     <span>${item.name}</span>
                 `;
@@ -129,9 +129,10 @@ class FileExplorer {
       const iconClass = file.type === "directory" ? "folder-icon" : "file-icon";
       const fileSize =
         file.type === "file" ? this.formatFileSize(file.size) : "";
-      const itemCount = file.type === "directory" && file.item_count !== null 
-        ? `${file.item_count} ${file.item_count === 1 ? 'item' : 'itens'}` 
-        : "";
+      const itemCount =
+        file.type === "directory" && file.item_count !== null
+          ? `${file.item_count} ${file.item_count === 1 ? "item" : "itens"}`
+          : "";
       const modifiedDate = new Date(file.modified * 1000).toLocaleDateString(
         "pt-BR"
       );
@@ -141,7 +142,7 @@ class FileExplorer {
                 <div class="file-name">${file.name}</div>
                 <div class="file-info">
                     ${
-                      file.type === "file" 
+                      file.type === "file"
                         ? fileSize + " • " + modifiedDate
                         : itemCount + (itemCount ? " • " : "") + modifiedDate
                     }
@@ -160,9 +161,11 @@ class FileExplorer {
                           '<button class="file-action-btn" title="Download" onclick="fileExplorer.downloadFile(\'' +
                           file.path +
                           '\')"><i class="fa-solid fa-download"></i></button>'
-                        : '<button  class="file-action-btn" onclick="fileExplorer.navigateToPath(\'' +
+                        : '<button  class="file-action-btn" title="Ir para ' +
+                          file.name +
+                          '" onclick="fileExplorer.navigateToPath(\'' +
                           file.path +
-                          "')\"><i class='fa-regular fa-folder-open'></i>&nbsp; Abrir</button>"
+                          "')\"><i class='fa-solid fa-chevron-right'></i></button>"
                     }
                 </div>
             `;
@@ -340,10 +343,7 @@ class FileExplorer {
     this.closePreview();
 
     // Update tree selection and expand to path
-    if (window.treeNavigation) {
-      window.treeNavigation.expandToPath(path);
-      window.treeNavigation.highlightCurrentPath(path);
-    }
+    this.updateTreeSelection(path);
   }
 
   selectDirectory(path, element) {
@@ -355,8 +355,92 @@ class FileExplorer {
     // Add selection to current element
     element.classList.add("selected");
 
+    // Update folder icons
+    this.updateFolderIcons();
+
     // Navigate to selected directory
     this.navigateToPath(path);
+  }
+
+  updateTreeSelection(path) {
+    // Update folder icons first
+    this.updateFolderIcons();
+    
+    // Remove previous selection
+    document.querySelectorAll(".tree-node.selected").forEach((node) => {
+      node.classList.remove("selected");
+    });
+
+    // Find and select the current path in tree
+    if (window.treeNavigation) {
+      window.treeNavigation.expandToPath(path);
+      // Add a small delay to ensure tree is rendered
+      setTimeout(() => {
+        window.treeNavigation.highlightCurrentPath(path);
+        // Update icons after selection
+        this.updateFolderIcons();
+      }, 100);
+    } else {
+      // Fallback if treeNavigation is not available yet
+      this.findAndSelectTreeNode(path);
+      // Update icons after selection
+      this.updateFolderIcons();
+    }
+  }
+
+  findAndSelectTreeNode(path) {
+    // Try to find the node by data-node-id
+    const nodeId = this.generateNodeId(path);
+    let targetNode = document.querySelector(`[data-node-id="${nodeId}"]`);
+    
+    // If not found by ID, try to match by path content
+    if (!targetNode && path !== "/") {
+      const pathParts = path.split("/").filter(part => part);
+      const currentFolderName = pathParts[pathParts.length - 1];
+      
+      const allNodes = document.querySelectorAll(".tree-node");
+      for (const node of allNodes) {
+        const span = node.querySelector("span");
+        if (span && span.textContent.trim() === currentFolderName) {
+          targetNode = node;
+          break;
+        }
+      }
+    }
+    
+    // Select the found node
+    if (targetNode) {
+      targetNode.classList.add("selected");
+      targetNode.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+  }
+
+  updateFolderIcons() {
+    // Get all folder icons in tree nodes (excluding home icon)
+    const treeNodes = document.querySelectorAll(".tree-node");
+    
+    treeNodes.forEach(node => {
+      const icon = node.querySelector("i");
+      if (!icon) return;
+      
+      // Skip the home icon
+      if (icon.classList.contains("fa-house")) return;
+      
+      // Check if this node is selected
+      if (node.classList.contains("selected")) {
+        // Selected folder should show folder-open
+        if (icon.classList.contains("fa-folder")) {
+          icon.classList.remove("fa-folder");
+          icon.classList.add("fa-folder-open");
+        }
+      } else {
+        // Non-selected folders should show folder
+        if (icon.classList.contains("fa-folder-open")) {
+          icon.classList.remove("fa-folder-open");
+          icon.classList.add("fa-folder");
+        }
+      }
+    });
   }
 
   updateBreadcrumb() {
@@ -528,11 +612,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Highlight initial path after everything loads
   setTimeout(() => {
-    if (window.treeNavigation && window.fileExplorer) {
-      window.treeNavigation.expandToPath(window.fileExplorer.currentPath);
-      window.treeNavigation.highlightCurrentPath(
-        window.fileExplorer.currentPath
-      );
+    if (window.fileExplorer) {
+      window.fileExplorer.updateTreeSelection(window.fileExplorer.currentPath);
     }
   }, 500);
 });

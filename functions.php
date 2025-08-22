@@ -126,7 +126,7 @@ function getDirectoryTree($basePath, $maxDepth, $config, $currentDepth = 0) {
         $fullPath = $basePath . DIRECTORY_SEPARATOR . $item;
         
         if (is_dir($fullPath)) {
-            $relativePath = str_replace($basePath, '', $fullPath);
+            $relativePath = str_replace($config['base_path'], '', $fullPath);
             $relativePath = str_replace(DIRECTORY_SEPARATOR, '/', $relativePath);
             if (!$relativePath || $relativePath[0] !== '/') {
                 $relativePath = '/' . ltrim($relativePath, '/');
@@ -177,12 +177,14 @@ function getFiles($relativePath, $config) {
         }
         
         $itemPath = $fullPath . DIRECTORY_SEPARATOR . $item;
-        $relativePath = str_replace($config['base_path'], '', $itemPath);
+        $itemRelativePath = str_replace($config['base_path'], '', $itemPath);
+        // Normalize slashes for web use
+        $itemRelativePath = str_replace(DIRECTORY_SEPARATOR, '/', $itemRelativePath);
         $isDirectory = is_dir($itemPath);
         
         $fileInfo = array(
             'name' => $item,
-            'path' => $relativePath,
+            'path' => $itemRelativePath,
             'size' => is_file($itemPath) ? filesize($itemPath) : 0,
             'modified' => filemtime($itemPath),
             'type' => $isDirectory ? 'directory' : 'file',
