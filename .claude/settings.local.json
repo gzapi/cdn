@@ -9,7 +9,11 @@
       "Bash(taskkill:*)",
       "Bash(curl:*)",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(mkdir:*)",
+      "Bash(del index.html)",
+      "Bash(ren:*)",
+      "Bash(php:*)"
     ],
     "deny": [],
     "ask": [],
