@@ -1,0 +1,27 @@
+<div class="explorer-container">
+  <mat-toolbar color="primary" class="app-toolbar">
+    <button mat-icon-button (click)="toggleSidenav()">
+      <mat-icon>menu</mat-icon>
+    </button>
+    <span>File Explorer</span>
+    <span class="spacer"></span>
+    <app-connection-status></app-connection-status>
+    <button mat-icon-button>
+      <mat-icon>refresh</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <mat-sidenav-container class="sidenav-container">
+    <mat-sidenav 
+      #sidenav 
+      [opened]="sidenavOpened" 
+      mode="side" 
+      class="sidebar">
+      <app-directory-tree (pathSelected)="onPathSelected($event)"></app-directory-tree>
+    </mat-sidenav>
+
+    <mat-sidenav-content class="main-content">
+      <app-file-list [currentPath]="currentPath"></app-file-list>
+    </mat-sidenav-content>
+  </mat-sidenav-container>
+</div>

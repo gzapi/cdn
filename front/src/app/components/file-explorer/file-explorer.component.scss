@@ -1,0 +1,30 @@
+.explorer-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-toolbar {
+  position: relative;
+  z-index: 2;
+  
+  .spacer {
+    flex: 1 1 auto;
+  }
+}
+
+.sidenav-container {
+  flex: 1;
+  display: flex;
+}
+
+.sidebar {
+  width: 300px;
+  min-width: 300px;
+  max-width: 400px;
+  border-right: 1px solid #e0e0e0;
+}
+
+.main-content {
+  background-color: #f5f5f5;
+}

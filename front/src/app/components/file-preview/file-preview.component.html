@@ -1,0 +1,64 @@
+<div class="preview-container" *ngIf="showPreview && canPreview()">
+  <div class="preview-header">
+    <h4>Preview: {{ file.name }}</h4>
+    <span class="file-size">{{ file.sizeFormatted }}</span>
+  </div>
+  
+  <div class="preview-content">
+    <!-- Image Preview -->
+    <img 
+      *ngIf="isImage && previewUrl" 
+      [src]="previewUrl" 
+      [alt]="file.name"
+      class="preview-image"
+      (error)="showPreview = false">
+    
+    <!-- Video Preview -->
+    <video 
+      *ngIf="isVideo && previewUrl" 
+      [src]="previewUrl" 
+      controls 
+      class="preview-video"
+      (error)="showPreview = false">
+      Seu navegador não suporta o elemento de vídeo.
+    </video>
+    
+    <!-- Audio Preview -->
+    <audio 
+      *ngIf="isAudio && previewUrl" 
+      [src]="previewUrl" 
+      controls 
+      class="preview-audio"
+      (error)="showPreview = false">
+      Seu navegador não suporta o elemento de áudio.
+    </audio>
+    
+    <!-- PDF Preview -->
+    <iframe 
+      *ngIf="isPdf && previewUrl" 
+      [src]="previewUrl" 
+      class="preview-pdf"
+      (error)="showPreview = false">
+      <p>Seu navegador não suporta a visualização de PDFs. 
+         <a [href]="previewUrl" target="_blank">Clique aqui para baixar o PDF</a>
+      </p>
+    </iframe>
+  </div>
+  
+  <div class="preview-actions">
+    <button mat-raised-button color="primary" (click)="closePreview()">
+      <mat-icon>close</mat-icon>
+      Fechar Preview
+    </button>
+  </div>
+</div>
+
+<div class="no-preview" *ngIf="showPreview && !canPreview()">
+  <mat-icon>error_outline</mat-icon>
+  <h4>Preview não disponível</h4>
+  <p>Este tipo de arquivo não pode ser visualizado inline.</p>
+  <button mat-raised-button color="primary" (click)="closePreview()">
+    <mat-icon>close</mat-icon>
+    Fechar
+  </button>
+</div>

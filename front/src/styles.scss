@@ -1,0 +1,101 @@
+html, body { height: 100%; }
+body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+
+.explorer-container {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f5f5;
+}
+
+.sidebar {
+  width: 300px;
+  background-color: white;
+  border-right: 1px solid #e0e0e0;
+  overflow-y: auto;
+}
+
+.main-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.file-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.file-card {
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
+  }
+}
+
+.file-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  color: #5e84a4;
+}
+
+.folder-icon {
+  color: #94accc;
+}
+
+.breadcrumb {
+  background-color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  margin-bottom: 16px;
+  border: 1px solid #e0e0e0;
+}
+
+.tree-node {
+  padding: 4px 0;
+  
+  &:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .mat-icon {
+    margin-right: 8px;
+    color: #5e84a4;
+  }
+}
+
+.file-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.preview-container {
+  max-width: 100%;
+  max-height: 400px;
+  overflow: auto;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  margin-top: 16px;
+}
+
+.preview-image {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-video {
+  max-width: 100%;
+  height: auto;
+}
+
+.preview-pdf {
+  width: 100%;
+  height: 400px;
+  border: none;
+}
