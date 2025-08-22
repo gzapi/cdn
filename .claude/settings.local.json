@@ -8,7 +8,8 @@
       "Bash(PORT=3001 npm start)",
       "Bash(taskkill:*)",
       "Bash(curl:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(git commit:*)"
     ],
     "deny": [],
     "ask": [],
