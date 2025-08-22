@@ -8,6 +8,13 @@ build/
 */dist/
 */build/
 
+# User folders
+images/
+audios/
+documents/
+videos/
+examples/
+
 # Environment variables
 .env
 .env.local

@@ -1,57 +1,57 @@
 // Tree navigation and search functionality
 
 class TreeNavigation {
-    constructor() {
-        this.expandedNodes = new Set();
-        this.searchResults = [];
-        this.currentSearchTerm = '';
-        
-        this.initializeNavigation();
-    }
-    
-    initializeNavigation() {
-        this.createSearchBar();
-        this.bindNavigationEvents();
-        
-        // Load expanded state from localStorage
-        this.loadExpandedState();
-    }
-    
-    createSearchBar() {
-        const directoryTree = document.querySelector('.directory-tree');
-        if (!directoryTree) return;
-        
-        const searchContainer = document.createElement('div');
-        searchContainer.className = 'tree-search';
-        searchContainer.innerHTML = `
+  constructor() {
+    this.expandedNodes = new Set();
+    this.searchResults = [];
+    this.currentSearchTerm = "";
+
+    this.initializeNavigation();
+  }
+
+  initializeNavigation() {
+    this.createSearchBar();
+    this.bindNavigationEvents();
+
+    // Load expanded state from localStorage
+    this.loadExpandedState();
+  }
+
+  createSearchBar() {
+    const directoryTree = document.querySelector(".directory-tree");
+    if (!directoryTree) return;
+
+    const searchContainer = document.createElement("div");
+    searchContainer.className = "tree-search";
+    searchContainer.innerHTML = `
             <div class="form-group">
                 <div class="search-input-container">
                     <input type="text" class="form-control search-input" placeholder="Buscar arquivos..." id="treeSearchInput">
-                    <i class="material-icons search-icon">search</i>
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
                     <button class="clear-search" id="clearSearchBtn" style="display: none;">
-                        <i class="material-icons">clear</i>
+                        <i class="fa-solid fa-xmark"></i>
                     </button>
                 </div>
             </div>
             <div class="search-results" id="searchResults" style="display: none;"></div>
         `;
-        
-        // Insert search bar after tree header
-        const treeHeader = directoryTree.querySelector('.tree-header');
-        if (treeHeader) {
-            treeHeader.insertAdjacentElement('afterend', searchContainer);
-        }
-        
-        // Add styles
-        this.addSearchStyles();
-        
-        // Bind search events
-        this.bindSearchEvents();
+
+    // Insert search bar after tree header
+    const treeHeader = directoryTree.querySelector(".tree-header");
+    if (treeHeader) {
+      treeHeader.insertAdjacentElement("afterend", searchContainer);
     }
-    
-    addSearchStyles() {
-        const style = document.createElement('style');
-        style.textContent = `
+
+    // Add styles
+    this.addSearchStyles();
+
+    // Bind search events
+    this.bindSearchEvents();
+  }
+
+  addSearchStyles() {
+    const style = document.createElement("style");
+    style.textContent = `
             .tree-search {
                 padding: 8px 0;
                 border-bottom: 1px solid #e0e0e0;
@@ -206,417 +206,463 @@ class TreeNavigation {
                 font-size: 12px;
             }
         `;
-        document.head.appendChild(style);
+    document.head.appendChild(style);
+  }
+
+  bindSearchEvents() {
+    const searchInput = document.getElementById("treeSearchInput");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+
+    if (searchInput) {
+      let searchTimeout;
+
+      searchInput.addEventListener("input", (e) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+          this.performSearch(e.target.value);
+        }, 300);
+
+        // Show/hide clear button
+        if (e.target.value) {
+          clearSearchBtn.style.display = "flex";
+        } else {
+          clearSearchBtn.style.display = "none";
+        }
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          this.performSearch(e.target.value);
+        } else if (e.key === "Escape") {
+          this.clearSearch();
+        }
+      });
     }
-    
-    bindSearchEvents() {
-        const searchInput = document.getElementById('treeSearchInput');
-        const clearSearchBtn = document.getElementById('clearSearchBtn');
-        
-        if (searchInput) {
-            let searchTimeout;
-            
-            searchInput.addEventListener('input', (e) => {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(() => {
-                    this.performSearch(e.target.value);
-                }, 300);
-                
-                // Show/hide clear button
-                if (e.target.value) {
-                    clearSearchBtn.style.display = 'flex';
-                } else {
-                    clearSearchBtn.style.display = 'none';
-                }
-            });
-            
-            searchInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    this.performSearch(e.target.value);
-                } else if (e.key === 'Escape') {
-                    this.clearSearch();
-                }
-            });
-        }
-        
-        if (clearSearchBtn) {
-            clearSearchBtn.addEventListener('click', () => {
-                this.clearSearch();
-            });
-        }
+
+    if (clearSearchBtn) {
+      clearSearchBtn.addEventListener("click", () => {
+        this.clearSearch();
+      });
     }
-    
-    bindNavigationEvents() {
-        // Handle tree node expansion
-        document.addEventListener('click', (e) => {
-            const expandIcon = e.target.closest('.tree-node-expand-icon');
-            if (expandIcon) {
-                e.stopPropagation();
-                this.toggleNodeExpansion(expandIcon);
-            }
-        });
-        
-        // Handle keyboard navigation
-        document.addEventListener('keydown', (e) => {
-            if (e.target.closest('.directory-tree')) {
-                this.handleKeyboardNavigation(e);
-            }
-        });
+  }
+
+  bindNavigationEvents() {
+    // Handle tree node expansion
+    document.addEventListener("click", (e) => {
+      const expandIcon = e.target.closest(".tree-node-expand-icon");
+      if (expandIcon) {
+        e.stopPropagation();
+        this.toggleNodeExpansion(expandIcon);
+      }
+    });
+
+    // Handle keyboard navigation
+    document.addEventListener("keydown", (e) => {
+      if (e.target.closest(".directory-tree")) {
+        this.handleKeyboardNavigation(e);
+      }
+    });
+  }
+
+  async performSearch(query) {
+    this.currentSearchTerm = query.trim();
+
+    if (!this.currentSearchTerm) {
+      this.hideSearchResults();
+      return;
     }
-    
-    async performSearch(query) {
-        this.currentSearchTerm = query.trim();
-        
-        if (!this.currentSearchTerm) {
-            this.hideSearchResults();
-            return;
-        }
-        
-        if (this.currentSearchTerm.length < 2) {
-            return; // Don't search for less than 2 characters
-        }
-        
-        try {
-            this.showSearchLoading();
-            const results = await fileOperations.searchFiles(this.currentSearchTerm, fileExplorer.currentPath);
-            this.displaySearchResults(results);
-        } catch (error) {
-            this.showSearchError('Erro na busca: ' + error.message);
-        }
+
+    if (this.currentSearchTerm.length < 2) {
+      return; // Don't search for less than 2 characters
     }
-    
-    displaySearchResults(results) {
-        const searchResultsContainer = document.getElementById('searchResults');
-        if (!searchResultsContainer) return;
-        
-        if (results.length === 0) {
-            searchResultsContainer.innerHTML = `
+
+    try {
+      this.showSearchLoading();
+      const response = await fetch(
+        `index.php?action=search_files&query=${encodeURIComponent(
+          this.currentSearchTerm
+        )}&path=${encodeURIComponent(fileExplorer.currentPath)}`
+      );
+      const results = await response.json();
+
+      if (results.error) {
+        throw new Error(results.error);
+      }
+
+      this.displaySearchResults(results);
+    } catch (error) {
+      this.showSearchError("Erro na busca: " + error.message);
+    }
+  }
+
+  displaySearchResults(results) {
+    const searchResultsContainer = document.getElementById("searchResults");
+    if (!searchResultsContainer) return;
+
+    if (results.length === 0) {
+      searchResultsContainer.innerHTML = `
                 <div class="search-no-results">
                     Nenhum resultado encontrado para "${this.currentSearchTerm}"
                 </div>
             `;
-        } else {
-            let resultsHtml = '';
-            results.forEach(result => {
-                const icon = this.getFileIcon(result.name, result.type === 'directory');
-                resultsHtml += `
+    } else {
+      let resultsHtml = "";
+      results.forEach((result) => {
+        const icon = this.getFileIcon(result.name, result.type === "directory");
+        resultsHtml += `
                     <div class="search-result-item" data-path="${result.path}">
-                        <i class="material-icons search-result-icon">${icon}</i>
+                        <i class="${icon} search-result-icon"></i>
                         <div class="search-result-info">
                             <div class="search-result-name">${result.name}</div>
                             <div class="search-result-path">${result.path}</div>
                         </div>
                     </div>
                 `;
-            });
-            searchResultsContainer.innerHTML = resultsHtml;
-            
-            // Bind click events to search results
-            this.bindSearchResultEvents();
+      });
+      searchResultsContainer.innerHTML = resultsHtml;
+
+      // Bind click events to search results
+      this.bindSearchResultEvents();
+    }
+
+    searchResultsContainer.style.display = "block";
+  }
+
+  bindSearchResultEvents() {
+    const searchResults = document.querySelectorAll(".search-result-item");
+    searchResults.forEach((item) => {
+      item.addEventListener("click", () => {
+        const path = item.dataset.path;
+        const isDirectory = item
+          .querySelector(".search-result-icon")
+          .classList.contains("fa-solid fa-folder");
+
+        if (isDirectory) {
+          fileExplorer.navigateToPath(path);
+        } else {
+          // Navigate to parent directory and then preview file
+          const parentPath = path.substring(0, path.lastIndexOf("/"));
+          fileExplorer.navigateToPath(parentPath).then(() => {
+            fileExplorer.previewFile(path);
+          });
         }
-        
-        searchResultsContainer.style.display = 'block';
-    }
-    
-    bindSearchResultEvents() {
-        const searchResults = document.querySelectorAll('.search-result-item');
-        searchResults.forEach(item => {
-            item.addEventListener('click', () => {
-                const path = item.dataset.path;
-                const isDirectory = item.querySelector('.search-result-icon').textContent === 'folder';
-                
-                if (isDirectory) {
-                    fileExplorer.navigateToPath(path);
-                } else {
-                    // Navigate to parent directory and then preview file
-                    const parentPath = path.substring(0, path.lastIndexOf('/'));
-                    fileExplorer.navigateToPath(parentPath).then(() => {
-                        fileExplorer.previewFile(path);
-                    });
-                }
-                
-                this.clearSearch();
-            });
-        });
-    }
-    
-    showSearchLoading() {
-        const searchResultsContainer = document.getElementById('searchResults');
-        if (searchResultsContainer) {
-            searchResultsContainer.innerHTML = `
+
+        this.clearSearch();
+      });
+    });
+  }
+
+  showSearchLoading() {
+    const searchResultsContainer = document.getElementById("searchResults");
+    if (searchResultsContainer) {
+      searchResultsContainer.innerHTML = `
                 <div class="search-no-results">
-                    <i class="material-icons" style="animation: spin 1s linear infinite;">refresh</i>
+                    <i class="fa-solid fa-arrows-rotate" style="animation: spin 1s linear infinite;"></i>
                     Buscando...
                 </div>
             `;
-            searchResultsContainer.style.display = 'block';
-        }
+      searchResultsContainer.style.display = "block";
     }
-    
-    showSearchError(message) {
-        const searchResultsContainer = document.getElementById('searchResults');
-        if (searchResultsContainer) {
-            searchResultsContainer.innerHTML = `
+  }
+
+  showSearchError(message) {
+    const searchResultsContainer = document.getElementById("searchResults");
+    if (searchResultsContainer) {
+      searchResultsContainer.innerHTML = `
                 <div class="search-no-results" style="color: #f44336;">
-                    <i class="material-icons">error</i>
+                    <i class="fa-solid fa-triangle-exclamation"></i>
                     ${message}
                 </div>
             `;
-            searchResultsContainer.style.display = 'block';
-        }
+      searchResultsContainer.style.display = "block";
     }
-    
-    hideSearchResults() {
-        const searchResultsContainer = document.getElementById('searchResults');
-        if (searchResultsContainer) {
-            searchResultsContainer.style.display = 'none';
-        }
+  }
+
+  hideSearchResults() {
+    const searchResultsContainer = document.getElementById("searchResults");
+    if (searchResultsContainer) {
+      searchResultsContainer.style.display = "none";
     }
-    
-    clearSearch() {
-        const searchInput = document.getElementById('treeSearchInput');
-        const clearSearchBtn = document.getElementById('clearSearchBtn');
-        
-        if (searchInput) {
-            searchInput.value = '';
-        }
-        
-        if (clearSearchBtn) {
-            clearSearchBtn.style.display = 'none';
-        }
-        
-        this.currentSearchTerm = '';
-        this.hideSearchResults();
+  }
+
+  clearSearch() {
+    const searchInput = document.getElementById("treeSearchInput");
+    const clearSearchBtn = document.getElementById("clearSearchBtn");
+
+    if (searchInput) {
+      searchInput.value = "";
     }
-    
-    toggleNodeExpansion(expandIcon) {
-        const treeNode = expandIcon.closest('.tree-node');
-        const nodeId = treeNode.dataset.nodeId;
-        const childrenContainer = treeNode.querySelector('.tree-node-children');
-        
-        if (!childrenContainer) return;
-        
-        const isExpanded = this.expandedNodes.has(nodeId);
-        
-        if (isExpanded) {
-            // Collapse
-            expandIcon.classList.remove('expanded');
-            childrenContainer.classList.remove('expanded');
-            childrenContainer.classList.add('collapsed');
-            this.expandedNodes.delete(nodeId);
-        } else {
-            // Expand
-            expandIcon.classList.add('expanded');
-            childrenContainer.classList.add('expanded');
-            childrenContainer.classList.remove('collapsed');
-            this.expandedNodes.add(nodeId);
+
+    if (clearSearchBtn) {
+      clearSearchBtn.style.display = "none";
+    }
+
+    this.currentSearchTerm = "";
+    this.hideSearchResults();
+  }
+
+  toggleNodeExpansion(expandIcon) {
+    const treeNode = expandIcon.closest(".tree-node");
+    const nodeId = treeNode.dataset.nodeId;
+    const childrenContainer = treeNode.querySelector(".tree-node-children");
+
+    if (!childrenContainer) return;
+
+    const isExpanded = this.expandedNodes.has(nodeId);
+
+    if (isExpanded) {
+      // Collapse
+      expandIcon.classList.remove("expanded");
+      childrenContainer.classList.remove("expanded");
+      childrenContainer.classList.add("collapsed");
+      this.expandedNodes.delete(nodeId);
+    } else {
+      // Expand
+      expandIcon.classList.add("expanded");
+      childrenContainer.classList.add("expanded");
+      childrenContainer.classList.remove("collapsed");
+      this.expandedNodes.add(nodeId);
+    }
+
+    // Save state
+    this.saveExpandedState();
+  }
+
+  handleKeyboardNavigation(e) {
+    const focusedNode = document.querySelector(".tree-node.focused");
+
+    switch (e.key) {
+      case "ArrowUp":
+        e.preventDefault();
+        this.focusPreviousNode(focusedNode);
+        break;
+
+      case "ArrowDown":
+        e.preventDefault();
+        this.focusNextNode(focusedNode);
+        break;
+
+      case "ArrowRight":
+        e.preventDefault();
+        if (focusedNode) {
+          const expandIcon = focusedNode.querySelector(
+            ".tree-node-expand-icon"
+          );
+          if (expandIcon && !expandIcon.classList.contains("expanded")) {
+            this.toggleNodeExpansion(expandIcon);
+          }
         }
-        
-        // Save state
-        this.saveExpandedState();
-    }
-    
-    handleKeyboardNavigation(e) {
-        const focusedNode = document.querySelector('.tree-node.focused');
-        
-        switch (e.key) {
-            case 'ArrowUp':
-                e.preventDefault();
-                this.focusPreviousNode(focusedNode);
-                break;
-                
-            case 'ArrowDown':
-                e.preventDefault();
-                this.focusNextNode(focusedNode);
-                break;
-                
-            case 'ArrowRight':
-                e.preventDefault();
-                if (focusedNode) {
-                    const expandIcon = focusedNode.querySelector('.tree-node-expand-icon');
-                    if (expandIcon && !expandIcon.classList.contains('expanded')) {
-                        this.toggleNodeExpansion(expandIcon);
-                    }
-                }
-                break;
-                
-            case 'ArrowLeft':
-                e.preventDefault();
-                if (focusedNode) {
-                    const expandIcon = focusedNode.querySelector('.tree-node-expand-icon');
-                    if (expandIcon && expandIcon.classList.contains('expanded')) {
-                        this.toggleNodeExpansion(expandIcon);
-                    }
-                }
-                break;
-                
-            case 'Enter':
-                e.preventDefault();
-                if (focusedNode) {
-                    focusedNode.click();
-                }
-                break;
+        break;
+
+      case "ArrowLeft":
+        e.preventDefault();
+        if (focusedNode) {
+          const expandIcon = focusedNode.querySelector(
+            ".tree-node-expand-icon"
+          );
+          if (expandIcon && expandIcon.classList.contains("expanded")) {
+            this.toggleNodeExpansion(expandIcon);
+          }
         }
-    }
-    
-    focusPreviousNode(currentNode) {
-        const allNodes = Array.from(document.querySelectorAll('.tree-node'));
-        const currentIndex = allNodes.indexOf(currentNode);
-        
-        if (currentIndex > 0) {
-            this.setNodeFocus(allNodes[currentIndex - 1]);
+        break;
+
+      case "Enter":
+        e.preventDefault();
+        if (focusedNode) {
+          focusedNode.click();
         }
+        break;
     }
-    
-    focusNextNode(currentNode) {
-        const allNodes = Array.from(document.querySelectorAll('.tree-node'));
-        const currentIndex = allNodes.indexOf(currentNode);
-        
-        if (currentIndex < allNodes.length - 1) {
-            this.setNodeFocus(allNodes[currentIndex + 1]);
-        }
+  }
+
+  focusPreviousNode(currentNode) {
+    const allNodes = Array.from(document.querySelectorAll(".tree-node"));
+    const currentIndex = allNodes.indexOf(currentNode);
+
+    if (currentIndex > 0) {
+      this.setNodeFocus(allNodes[currentIndex - 1]);
     }
-    
-    setNodeFocus(node) {
-        // Remove focus from all nodes
-        document.querySelectorAll('.tree-node.focused').forEach(n => {
-            n.classList.remove('focused');
-        });
-        
-        // Add focus to target node
-        node.classList.add('focused');
-        node.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  focusNextNode(currentNode) {
+    const allNodes = Array.from(document.querySelectorAll(".tree-node"));
+    const currentIndex = allNodes.indexOf(currentNode);
+
+    if (currentIndex < allNodes.length - 1) {
+      this.setNodeFocus(allNodes[currentIndex + 1]);
     }
-    
-    getFileIcon(filename, isDirectory) {
-        if (isDirectory) {
-            return 'folder';
-        }
-        
-        const extension = filename.split('.').pop().toLowerCase();
-        
-        const iconMap = {
-            'txt': 'description',
-            'md': 'description',
-            'doc': 'description',
-            'docx': 'description',
-            'pdf': 'picture_as_pdf',
-            'jpg': 'image',
-            'jpeg': 'image',
-            'png': 'image',
-            'gif': 'image',
-            'mp4': 'video_file',
-            'avi': 'video_file',
-            'mp3': 'audio_file',
-            'wav': 'audio_file',
-            'zip': 'archive',
-            'rar': 'archive',
-            'html': 'code',
-            'css': 'code',
-            'js': 'code',
-            'php': 'code',
-            'json': 'code',
-            'xml': 'code'
-        };
-        
-        return iconMap[extension] || 'insert_drive_file';
+  }
+
+  setNodeFocus(node) {
+    // Remove focus from all nodes
+    document.querySelectorAll(".tree-node.focused").forEach((n) => {
+      n.classList.remove("focused");
+    });
+
+    // Add focus to target node
+    node.classList.add("focused");
+    node.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+
+  getFileIcon(filename, isDirectory) {
+    if (isDirectory) {
+      return "fa-solid fa-folder";
     }
-    
-    createBreadcrumbNavigation(path) {
-        const pathParts = path.split('/').filter(part => part);
-        const breadcrumbContainer = document.querySelector('.breadcrumb-navigation');
-        
-        if (!breadcrumbContainer) return;
-        
-        let breadcrumbHtml = `
+
+    const extension = filename.split(".").pop().toLowerCase();
+
+    const iconMap = {
+      txt: "fa-regular fa-file",
+      md: "fa-regular fa-file",
+      doc: "fa-regular fa-file-word",
+      docx: "fa-regular fa-file-word",
+      odt: "fa-regular fa-file-word",
+      ods: "fa-solid fa-file-excel",
+      odp: "fa-regular fa-file-powerpoint",
+      odg: "fa-regular fa-file",
+      odf: "fa-regular fa-file",
+      pdf: "fa-solid fa-file-pdf",
+      xls: "fa-solid fa-file-excel",
+      xlsx: "fa-solid fa-file-excel",
+      jpg: "fa-regular fa-image",
+      jpeg: "fa-regular fa-image",
+      png: "fa-regular fa-image",
+      gif: "fa-regular fa-image",
+      mp4: "fa-solid fa-file-video",
+      avi: "fa-solid fa-file-video",
+      mov: "fa-solid fa-file-video",
+      wmv: "fa-solid fa-file-video",
+      mp3: "fa-solid fa-file-audio",
+      wav: "fa-solid fa-file-audio",
+      ogg: "fa-solid fa-file-audio",
+      opus: "fa-solid fa-file-audio",
+      zip: "fa-solid fa-file-zipper",
+      rar: "fa-solid fa-file-zipper",
+      "7z": "fa-solid fa-file-zipper",
+      tar: "fa-solid fa-file-zipper",
+      gz: "fa-solid fa-file-zipper",
+      html: "fa-regular fa-file-code",
+      css: "fa-regular fa-file-code",
+      js: "fa-regular fa-file-code",
+      php: "fa-regular fa-file-code",
+      json: "fa-regular fa-file-code",
+      xml: "fa-regular fa-file-code",
+    };
+
+    return iconMap[extension] || "fa-regular fa-file";
+  }
+
+  createBreadcrumbNavigation(path) {
+    const pathParts = path.split("/").filter((part) => part);
+    const breadcrumbContainer = document.querySelector(
+      ".breadcrumb-navigation"
+    );
+
+    if (!breadcrumbContainer) return;
+
+    let breadcrumbHtml = `
             <div class="breadcrumb-nav-item" onclick="fileExplorer.navigateToPath('/')">
-                <i class="material-icons">home</i>
+                <i class="fa-solid fa-house"></i>
             </div>
         `;
-        
-        let currentPath = '';
-        pathParts.forEach((part, index) => {
-            currentPath += '/' + part;
-            
-            if (index > 0) {
-                breadcrumbHtml += '<span class="breadcrumb-nav-separator">></span>';
-            }
-            
-            breadcrumbHtml += `
+
+    let currentPath = "";
+    pathParts.forEach((part, index) => {
+      currentPath += "/" + part;
+
+      if (index > 0) {
+        breadcrumbHtml += '<span class="breadcrumb-nav-separator">></span>';
+      }
+
+      breadcrumbHtml += `
                 <div class="breadcrumb-nav-item" onclick="fileExplorer.navigateToPath('${currentPath}')">
                     ${part}
                 </div>
             `;
-        });
-        
-        breadcrumbContainer.innerHTML = breadcrumbHtml;
+    });
+
+    breadcrumbContainer.innerHTML = breadcrumbHtml;
+  }
+
+  saveExpandedState() {
+    localStorage.setItem(
+      "treeExpandedNodes",
+      JSON.stringify([...this.expandedNodes])
+    );
+  }
+
+  loadExpandedState() {
+    try {
+      const saved = localStorage.getItem("treeExpandedNodes");
+      if (saved) {
+        this.expandedNodes = new Set(JSON.parse(saved));
+      }
+    } catch (error) {
+      console.warn("Failed to load expanded state:", error);
     }
-    
-    saveExpandedState() {
-        localStorage.setItem('treeExpandedNodes', JSON.stringify([...this.expandedNodes]));
-    }
-    
-    loadExpandedState() {
-        try {
-            const saved = localStorage.getItem('treeExpandedNodes');
-            if (saved) {
-                this.expandedNodes = new Set(JSON.parse(saved));
-            }
-        } catch (error) {
-            console.warn('Failed to load expanded state:', error);
+  }
+
+  // Utility methods for external use
+  expandToPath(path) {
+    const pathParts = path.split("/").filter((part) => part);
+    let currentPath = "";
+
+    pathParts.forEach((part) => {
+      currentPath += "/" + part;
+      const nodeId = this.generateNodeId(currentPath);
+      this.expandedNodes.add(nodeId);
+    });
+
+    this.saveExpandedState();
+    // Re-render tree with expanded state
+    fileExplorer.loadDirectoryTree();
+  }
+
+  generateNodeId(path) {
+    return path.replace(/[^a-zA-Z0-9]/g, "_");
+  }
+
+  highlightCurrentPath(currentPath) {
+    // Remove previous highlights
+    document.querySelectorAll(".tree-node.selected").forEach((node) => {
+      node.classList.remove("selected");
+    });
+
+    // Add highlight to current path
+    const nodeId = this.generateNodeId(currentPath);
+    let currentNode = document.querySelector(`[data-node-id="${nodeId}"]`);
+
+    // If exact match not found, try to find by matching text content
+    if (!currentNode) {
+      const pathParts = currentPath.split("/").filter((part) => part);
+      const currentFolderName = pathParts[pathParts.length - 1];
+
+      if (currentFolderName) {
+        const treeNodes = document.querySelectorAll(".tree-node");
+        for (const node of treeNodes) {
+          const span = node.querySelector("span");
+          if (span && span.textContent.trim() === currentFolderName) {
+            currentNode = node;
+            break;
+          }
         }
+      }
     }
-    
-    // Utility methods for external use
-    expandToPath(path) {
-        const pathParts = path.split('/').filter(part => part);
-        let currentPath = '';
-        
-        pathParts.forEach(part => {
-            currentPath += '/' + part;
-            const nodeId = this.generateNodeId(currentPath);
-            this.expandedNodes.add(nodeId);
-        });
-        
-        this.saveExpandedState();
-        // Re-render tree with expanded state
-        fileExplorer.loadDirectoryTree();
+
+    if (currentNode) {
+      currentNode.classList.add("selected");
+      currentNode.scrollIntoView({ behavior: "smooth", block: "nearest" });
     }
-    
-    generateNodeId(path) {
-        return path.replace(/[^a-zA-Z0-9]/g, '_');
-    }
-    
-    highlightCurrentPath(currentPath) {
-        // Remove previous highlights
-        document.querySelectorAll('.tree-node.current-path').forEach(node => {
-            node.classList.remove('current-path');
-        });
-        
-        // Add highlight to current path
-        const nodeId = this.generateNodeId(currentPath);
-        const currentNode = document.querySelector(`[data-node-id="${nodeId}"]`);
-        
-        if (currentNode) {
-            currentNode.classList.add('current-path');
-            currentNode.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }
-    }
+  }
 }
 
 // Initialize tree navigation when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    window.treeNavigation = new TreeNavigation();
-    
-    // Add current path highlighting styles
-    const style = document.createElement('style');
-    style.textContent = `
-        .tree-node.current-path {
-            background-color: #e3f2fd;
-            color: #1976d2;
-            font-weight: 500;
-        }
-        
+document.addEventListener("DOMContentLoaded", () => {
+  window.treeNavigation = new TreeNavigation();
+
+  // Add focused and animation styles
+  const style = document.createElement("style");
+  style.textContent = `
         .tree-node.focused {
             outline: 2px solid #1976d2;
             outline-offset: -2px;
@@ -628,5 +674,5 @@ document.addEventListener('DOMContentLoaded', () => {
             100% { transform: rotate(360deg); }
         }
     `;
-    document.head.appendChild(style);
+  document.head.appendChild(style);
 });

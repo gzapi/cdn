@@ -48,7 +48,6 @@ class FileExplorer {
   renderDirectoryTree(tree, container = null, level = 0) {
     if (!container) {
       container = document.getElementById("directoryTree");
-
       const homeNode = container.querySelector(".tree-node");
 
       if (homeNode) {
@@ -65,12 +64,14 @@ class FileExplorer {
         const nodeEl = document.createElement("div");
         nodeEl.className = "tree-node";
         nodeEl.style.paddingLeft = `${(level + 1) * 20}px`;
+        const nodeId = this.generateNodeId(item.path);
+        nodeEl.setAttribute("data-node-id", nodeId);
         nodeEl.innerHTML = `
-                    <i class="material-icons">${
+                    <i class="fa-solid ${
                       item.children && item.children.length > 0
-                        ? "folder"
-                        : "folder_open"
-                    }</i>
+                        ? "fa-folder"
+                        : "fa-folder-open"
+                    }"></i>
                     <span>${item.name}</span>
                 `;
 
@@ -94,6 +95,7 @@ class FileExplorer {
       const response = await fetch(
         `index.php?action=get_files&path=${encodeURIComponent(path)}`
       );
+
       const data = await response.json();
 
       if (data.error) {
@@ -101,6 +103,7 @@ class FileExplorer {
         return;
       }
 
+      console.log(data);
       this.files = data;
       this.renderFiles(data);
     } catch (error) {
@@ -126,42 +129,72 @@ class FileExplorer {
       const iconClass = file.type === "directory" ? "folder-icon" : "file-icon";
       const fileSize =
         file.type === "file" ? this.formatFileSize(file.size) : "";
+      const itemCount = file.type === "directory" && file.item_count !== null 
+        ? `${file.item_count} ${file.item_count === 1 ? 'item' : 'itens'}` 
+        : "";
       const modifiedDate = new Date(file.modified * 1000).toLocaleDateString(
         "pt-BR"
       );
 
       fileCard.innerHTML = `
-                <i class="material-icons ${iconClass}">${file.icon}</i>
+                <i class="${file.icon} ${iconClass}"></i>
                 <div class="file-name">${file.name}</div>
                 <div class="file-info">
                     ${
-                      file.type === "file" ? fileSize + " • " : ""
-                    }${modifiedDate}
+                      file.type === "file" 
+                        ? fileSize + " • " + modifiedDate
+                        : itemCount + (itemCount ? " • " : "") + modifiedDate
+                    }
                 </div>
                 <div class="file-actions">
                     ${
                       file.type === "file"
-                        ? '<button class="file-action-btn" onclick="fileExplorer.previewFile(\'' +
+                        ? (this.canPreviewFile(file.extension || "")
+                            ? '<button title="Visualizar" class="file-action-btn" onclick="fileExplorer.previewFile(\'' +
+                              file.path +
+                              '\')"><i class="fa-regular fa-eye"></i></button>'
+                            : "") +
+                          '<button title="Copiar URL" class="file-action-btn" onclick="fileExplorer.copyFileUrl(\'' +
                           file.path +
-                          "')\">Visualizar</button>"
-                        : ""
+                          '\')"><i class="fa-solid fa-copy"></i></button>' +
+                          '<button class="file-action-btn" title="Download" onclick="fileExplorer.downloadFile(\'' +
+                          file.path +
+                          '\')"><i class="fa-solid fa-download"></i></button>'
+                        : '<button  class="file-action-btn" onclick="fileExplorer.navigateToPath(\'' +
+                          file.path +
+                          "')\"><i class='fa-regular fa-folder-open'></i>&nbsp; Abrir</button>"
                     }
-                    <button class="file-action-btn" onclick="fileExplorer.downloadFile('${
-                      file.path
-                    }')">Download</button>
                 </div>
             `;
 
-      fileCard.addEventListener("click", () => {
-        if (file.type === "directory") {
-          this.navigateToPath(file.path);
-        } else {
-          this.previewFile(file.path);
-        }
-      });
-
       fileGrid.appendChild(fileCard);
     });
+  }
+
+  canPreviewFile(extension) {
+    const previewableExtensions = [
+      "txt",
+      "md",
+      "json",
+      "xml",
+      "html",
+      "css",
+      "js",
+      "php",
+      "jpg",
+      "jpeg",
+      "png",
+      "gif",
+      "pdf",
+      "mp4",
+      "avi",
+      "mov",
+      "wmv",
+      "mp3",
+      "wav",
+      "ogg",
+    ];
+    return previewableExtensions.includes(extension.toLowerCase());
   }
 
   async previewFile(filePath) {
@@ -207,6 +240,30 @@ class FileExplorer {
         contentHtml = `<iframe src="${fileData.content}" class="preview-pdf"></iframe>`;
         break;
 
+      case "video":
+        contentHtml = `<video controls class="preview-video">
+          <source src="${fileData.content}" type="video/${fileData.extension}">
+          Seu navegador não suporta reprodução de vídeo.
+        </video>`;
+        break;
+
+      case "audio":
+        contentHtml = `<audio controls class="preview-audio">
+          <source src="${fileData.content}" type="audio/${fileData.extension}">
+          Seu navegador não suporta reprodução de áudio.
+        </audio>`;
+        break;
+
+      case "document":
+        contentHtml = `<div class="preview-document">
+          <p>Arquivo Word detectado: ${fileName}</p>
+          <p>O navegador não consegue exibir documentos Word diretamente.</p>
+          <button onclick="window.open('${fileData.content}', '_blank')" class="download-btn">
+            <i class="fa-solid fa-download"></i> Baixar arquivo
+          </button>
+        </div>`;
+        break;
+
       case "text":
       default:
         const escapedContent = this.escapeHtml(fileData.content);
@@ -222,6 +279,39 @@ class FileExplorer {
   closePreview() {
     const previewContainer = document.getElementById("previewContainer");
     previewContainer.style.display = "none";
+  }
+
+  copyFileUrl(filePath) {
+    const baseUrl = window.location.origin + window.location.pathname;
+    const fileUrl = `${baseUrl}?action=download&file=${encodeURIComponent(
+      filePath
+    )}`;
+
+    navigator.clipboard
+      .writeText(fileUrl)
+      .then(() => {
+        this.showToast("URL copiada para a área de transferência!", "success");
+      })
+      .catch((err) => {
+        // Fallback para navegadores mais antigos
+        const textArea = document.createElement("textarea");
+        textArea.value = fileUrl;
+        document.body.appendChild(textArea);
+        textArea.select();
+        textArea.setSelectionRange(0, 99999);
+
+        try {
+          document.execCommand("copy");
+          this.showToast(
+            "URL copiada para a área de transferência!",
+            "success"
+          );
+        } catch (err) {
+          this.showToast("Erro ao copiar URL", "error");
+        }
+
+        document.body.removeChild(textArea);
+      });
   }
 
   downloadFile(filePath) {
@@ -248,6 +338,12 @@ class FileExplorer {
     await this.loadFiles(path);
     this.updateBreadcrumb();
     this.closePreview();
+
+    // Update tree selection and expand to path
+    if (window.treeNavigation) {
+      window.treeNavigation.expandToPath(path);
+      window.treeNavigation.highlightCurrentPath(path);
+    }
   }
 
   selectDirectory(path, element) {
@@ -340,21 +436,19 @@ class FileExplorer {
     toast.className = `toast toast-${type}`;
 
     const icons = {
-      success: "check_circle",
-      error: "error",
-      warning: "warning",
-      info: "info",
+      success: "fa-solid fa-circle-check",
+      error: "fa-solid fa-circle-exclamation",
+      warning: "fa-solid fa-triangle-exclamation",
+      info: "fa-solid fa-circle-info",
     };
 
     toast.innerHTML = `
-            <i class="material-icons toast-icon">${
-              icons[type] || icons.info
-            }</i>
+            <i class="${icons[type] || icons.info} toast-icon"></i>
             <div class="toast-content">
                 <div class="toast-message">${message}</div>
             </div>
             <button class="toast-close" onclick="this.parentElement.remove()">
-                <i class="material-icons">close</i>
+                <i class="fa-solid fa-xmark"></i>
             </button>
         `;
 
@@ -371,6 +465,10 @@ class FileExplorer {
         toast.remove();
       }
     }, 5000);
+  }
+
+  generateNodeId(path) {
+    return path.replace(/[^a-zA-Z0-9]/g, "_");
   }
 
   formatFileSize(bytes) {
@@ -427,4 +525,14 @@ function goBack() {
 // Initialize application when DOM is loaded
 document.addEventListener("DOMContentLoaded", () => {
   window.fileExplorer = new FileExplorer();
+
+  // Highlight initial path after everything loads
+  setTimeout(() => {
+    if (window.treeNavigation && window.fileExplorer) {
+      window.treeNavigation.expandToPath(window.fileExplorer.currentPath);
+      window.treeNavigation.highlightCurrentPath(
+        window.fileExplorer.currentPath
+      );
+    }
+  }, 500);
 });
